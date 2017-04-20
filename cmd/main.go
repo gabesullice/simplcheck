@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -10,8 +10,13 @@ import (
 	"github.com/gabesullice/simplcheck/lib/checker"
 )
 
+const (
+	page   = `<!DOCTYPE html><html><body><ol>{{ range . }}<li>{{ template "status" . }}</li>{{ end }}</ol></body></html>`
+	status = `<span style="color: {{ if eq .State "passing" }}green{{ else if eq .State "unknown" }}orange{{ else }}red{{ end }};">{{ .URL }} has been {{ .State }} for the past {{ .Times }} checks`
+)
+
 type Reporter interface {
-	Report() []string
+	Report() []checker.Report
 }
 
 type ConfigFileLoader interface {
@@ -75,8 +80,15 @@ func StatusPage(reporter Reporter) http.HandlerFunc {
 			return
 		}
 		reports := reporter.Report()
-		for _, report := range reports {
-			fmt.Fprintf(w, "%s\n", report)
-		}
+		w.Header().Set("Content-Type", "text/html")
+		tmpl := template.Must(template.New("page").Parse(page))
+		tmpl = template.Must(tmpl.New("status").Parse(status))
+		ensure(tmpl.ExecuteTemplate(w, "page", reports))
+	}
+}
+
+func ensure(err error) {
+	if err != nil {
+		log.Fatalln(err)
 	}
 }

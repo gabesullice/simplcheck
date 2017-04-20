@@ -50,8 +50,8 @@ func TestCheck(t *testing.T) {
 			if status.state != check.expectState {
 				t.Errorf("Expected %s state, got: %s", check.expectState, status.state)
 			}
-			if status.checks != check.expectChecks {
-				t.Errorf("Expected %d checks, got: %d", check.expectChecks, status.checks)
+			if status.times != check.expectChecks {
+				t.Errorf("Expected %d checks, got: %d", check.expectChecks, status.times)
 			}
 		}
 

@@ -10,9 +10,16 @@ import (
 )
 
 type Status struct {
-	state  string
-	checks uint
-	err    error
+	state string
+	times uint
+	err   error
+}
+
+type Report struct {
+	URL   string
+	State string
+	Times uint
+	Err   error
 }
 
 type Checker struct {
@@ -58,18 +65,20 @@ func (c *Checker) Run() {
 		if err != nil {
 			log.Fatalln("Unable to parse duration from interval configuration.", err)
 		}
-		time.Sleep(dur)
 		for url := range c.statuses {
-			c.Check(url)
+			go c.Check(url)
 		}
+		time.Sleep(dur)
 	}
 }
 
-func (c Checker) Report() []string {
-	var reports []string
+func (c Checker) Report() []Report {
+	var reports []Report
 	for uri, status := range c.statuses {
-		tmpl := "%s: %s for the past %d checks"
-		reports = append(reports, fmt.Sprintf(tmpl, uri, status.state, status.checks))
+		reports = append(
+			reports,
+			Report{uri, status.state, status.times, status.err},
+		)
 	}
 	return reports
 }
@@ -94,9 +103,9 @@ func (c *Checker) Check(url string) (new Status, err error) {
 	}
 
 	if old.state == new.state {
-		new.checks = old.checks + 1
+		new.times = old.times + 1
 	} else {
-		new.checks = 1
+		new.times = 1
 	}
 
 	c.statuses[url] = new
