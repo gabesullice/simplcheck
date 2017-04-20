@@ -1,0 +1,9 @@
+{
+  "settings": {
+    "interval": "5000ms"
+  },
+  "applications": [
+    "https://aten.io",
+    "https://google.com"
+  ]
+}
